@@ -1,3 +1,4 @@
+// src/models/user.model.js
 import mongoose, { Schema, model } from "mongoose";
 
 const UserSchema = new Schema(
@@ -22,13 +23,15 @@ const UserSchema = new Schema(
       type: String,
       enum: ["male", "female", "other"],
     },
-
     role: {
       type: String,
       enum: ["admin", "staff", "user"],
       default: "user",
     },
-
+    permissions: [{
+      type: Schema.Types.ObjectId,
+      ref: "Permission",
+    }],
   },
   {
     timestamps: true,
