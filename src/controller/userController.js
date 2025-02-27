@@ -1,15 +1,10 @@
-import Permission from "../models/permission.model.js";
+import Role from "../models/role.model.js";
 import User from "../models/user.model.js";
 import { successResponse, errorResponse } from "../utils/apiResponse.js";
 import { genSalt, hash } from "bcryptjs";
 
-const assignPermissionsByRole = async (role) => {
-  const permissions = await Permission.find({ rolePermissions: role });
-  return permissions.map((p) => p._id);
-};
-
 export const createUser = async (req, res) => {
-  const { name, email, password, gender, role } = req.body;
+  const { name, email, password, gender, role } = req.body; // Changed roleId to role
   try {
     let user = await User.findOne({ email });
     if (user) {
@@ -19,8 +14,14 @@ export const createUser = async (req, res) => {
         400
       );
     }
-    const permissions = await assignPermissionsByRole(role);
-    user = new User({ name, email, password, gender, role, permissions });
+
+    // Find role by name instead of ID
+    const roleDoc = await Role.findOne({ name: role });
+    if (!roleDoc) {
+      return errorResponse(res, `Role '${role}' not found`, 404);
+    }
+
+    user = new User({ name, email, password, gender, role: roleDoc._id });
     const salt = await genSalt(10);
     user.password = await hash(password, salt);
     await user.save();
@@ -32,29 +33,36 @@ export const createUser = async (req, res) => {
 
 export const updateUser = async (req, res) => {
   const { id } = req.params;
-  const { name, email, gender, role } = req.body;
+  const { name, email, gender, role } = req.body; // Changed roleId to role
   try {
     let user = await User.findById(id);
     if (!user) {
       return errorResponse(res, "User not found", 404);
     }
-    const permissions = role
-      ? await assignPermissionsByRole(role)
-      : user.permissions;
+    if (role) {
+      const roleDoc = await Role.findOne({ name: role });
+      if (!roleDoc) {
+        return errorResponse(res, `Role '${role}' not found`, 404);
+      }
+      user.role = roleDoc._id;
+    }
     user = await User.findByIdAndUpdate(
       id,
-      { name, email, gender, role, permissions },
+      { name, email, gender, role: user.role },
       { new: true }
     );
     successResponse(res, user, "User updated successfully");
   } catch (err) {
-    errorResponse(res, `Error: ${err.message}`, 500);
+    errorResponse(res, `Error: ${err.message} || or Email already Exist`, 500);
   }
 };
 
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find();
+    const users = await User.find().populate({
+      path: "role",
+      populate: { path: "permissions" },
+    });
     successResponse(res, users, "Users fetched successfully");
   } catch (err) {
     errorResponse(res, `Error: ${err.message}`, 500);
@@ -64,7 +72,10 @@ export const getAllUsers = async (req, res) => {
 export const getUserById = async (req, res) => {
   const { id } = req.params;
   try {
-    const user = await User.findById(id);
+    const user = await User.findById(id).populate({
+      path: "role",
+      populate: { path: "permissions" },
+    });
     if (!user) {
       return errorResponse(res, "User not found", 404);
     }

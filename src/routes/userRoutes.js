@@ -16,20 +16,35 @@ const router = express.Router();
 
 // Test APIs
 router.get("/admin", verifyToken, authorizeRole("admin"), (req, res) => {
-  successResponse(res, "Admin Login successfully", req.user);
+  successResponse(res, "Admin Approved", req.user);
 });
-router.get("/staff", verifyToken, authorizeRole("admin", "staff"), (req, res) => {
-  successResponse(res, "Staff Login successfully", req.user);
-});
-router.get("/user", verifyToken, authorizeRole("admin", "staff", "user"), (req, res) => {
-  successResponse(res, "User Login successfully", req.user);
-});
+router.get(
+  "/staff",
+  verifyToken,
+  authorizeRole("admin", "staff"),
+  (req, res) => {
+    successResponse(res, "Staff Approved", req.user);
+  }
+);
+router.get(
+  "/user",
+  verifyToken,
+  authorizeRole("admin", "staff", "user"),
+  (req, res) => {
+    successResponse(res, "User Approved", req.user);
+  }
+);
 
 // Updated routes with permission checks
 router.post("/user", verifyToken, hasPermission("create_user"), createUser);
-router.put("/user/:id", verifyToken, hasPermission("update_user"), updateUser); //0 Admin and Staff can update
+router.put("/user/:id", verifyToken, hasPermission("update_user"), updateUser);
 router.get("/users", verifyToken, hasPermission("view_users"), getAllUsers);
 router.get("/user/:id", verifyToken, hasPermission("view_self"), getUserById);
-router.delete("/user/:id", verifyToken, hasPermission("delete_user"), deleteUser);
+router.delete(
+  "/user/:id",
+  verifyToken,
+  hasPermission("delete_user"),
+  deleteUser
+);
 
 export default router;

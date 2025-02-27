@@ -1,6 +1,6 @@
 import mongoose, { Schema, model } from "mongoose";
 
-const PermissionSchema = new Schema(
+const RoleSchema = new Schema(
   {
     name: {
       type: String,
@@ -11,11 +11,17 @@ const PermissionSchema = new Schema(
     description: {
       type: String,
     },
+    permissions: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Permission",
+      },
+    ],
   },
   {
     timestamps: true,
   }
 );
 
-const Permission = model("Permission", PermissionSchema);
-export default Permission;
+const Role = model("Role", RoleSchema);
+export default Role;

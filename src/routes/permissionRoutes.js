@@ -4,21 +4,21 @@ import { verifyToken } from "../middlewares/authMiddlewares.js";
 import authorizeRole from "../middlewares/roleMiddlewares.js";
 import {
   createPermission,
-  updatePermissionRoles,
-  addRoleToPermission,
-  removeRoleFromPermission,
+  updatePermission,
+  deletePermission,
   getAllPermissions,
   getPermissionById,
+  getPermissionByName,
 } from "../controller/permissionController.js";
 
 const router = express.Router();
 
 // Admin-only routes to manage permissions
-router.post("/permissions", verifyToken, authorizeRole("admin"), createPermission);
-router.put("/permissions/roles/:id", verifyToken, authorizeRole("admin"), updatePermissionRoles);
-router.post("/permissions/add-role/:id", verifyToken, authorizeRole("admin"), addRoleToPermission);
-router.post("/permissions/remove-role/:id", verifyToken, authorizeRole("admin"), removeRoleFromPermission);
+router.post("/permissions", verifyToken, authorizeRole("admin"), createPermission); 
+router.put("/permissions/:id", verifyToken, authorizeRole("admin"), updatePermission);
+router.delete("/permissions/:id", verifyToken, authorizeRole("admin"), deletePermission);
 router.get("/permissions", verifyToken, authorizeRole("admin"), getAllPermissions);
 router.get("/permissions/:id", verifyToken, authorizeRole("admin"), getPermissionById);
+router.get("/permissions/name/:name", verifyToken, authorizeRole("admin"), getPermissionByName);
 
 export default router;
