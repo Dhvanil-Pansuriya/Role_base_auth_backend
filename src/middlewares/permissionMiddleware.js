@@ -1,26 +1,34 @@
-// src/middlewares/permissionMiddlewares.js
+// src/middlewares/permissionMiddleware.js
 import Permission from "../models/permission.model.js";
+import User from "../models/user.model.js";
 import { errorResponse } from "../utils/apiResponse.js";
 
 const hasPermission = (permissionName) => {
   return async (req, res, next) => {
     try {
-      const userPermissions = await Permission.find({ user: req.user._id });
-      const rolePermissions = await Permission.find({
-        rolePermissions: req.user.role,
+      // Get the user with populated role and permissions
+      const user = await User.findById(req.user.id).populate({
+        path: "role",
+        populate: { path: "permissions" },
       });
 
-      // Check if user has the permission either via role or individual permissions
-      const hasRolePermission = rolePermissions.some(
-        (p) => p.name === permissionName
-      );
-      const hasIndividualPermission = userPermissions.some(
-        (p) => p.name === permissionName
+      if (!user) {
+        return errorResponse(res, "User not found", 404);
+      }
+
+      // Check if user's role has the required permission
+      const hasRequiredPermission = user.role.permissions.some(
+        (permission) => permission.name === permissionName
       );
 
-      if (!hasRolePermission && !hasIndividualPermission) {
-        return errorResponse(res, "Permission denied", 403);
+      if (!hasRequiredPermission) {
+        return errorResponse(
+          res,
+          `Permission denied: ${permissionName} for 'role : ${user.role.name}'`,
+          403
+        );
       }
+
       next();
     } catch (err) {
       errorResponse(res, `Error: ${err.message}`, 500);

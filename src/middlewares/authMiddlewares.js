@@ -1,5 +1,4 @@
-// middlewares/authMiddleware.js
-import jwt, { decode } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import { errorResponse } from "../utils/apiResponse.js";
 
 const verifyToken = async (req, res, next) => {
